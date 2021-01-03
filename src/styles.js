@@ -1,41 +1,36 @@
 import styled from "styled-components";
 
-export const Container = styled.div`
+export const WrapperHeader = styled.div`
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  > * {
+    margin: 10% 0;
+  }
+  margin: 12% 0 0% 0;
 `;
-
-export const Title = styled.h1`
-  color: #fff;
-  font-size: 3.5rem;
-  margin: 15% 5% 5% 5%;
-`;
-
-export const SecondTitle = styled.h2`
-  color: #fff;
-  font-size: 2.5rem;
-  width: 600px;
-  margin: 0;
-  text-align: left;
-  align-self: left;
-`;
-
-export const Divider = styled.div`
-  margin: 10% 0 15px 0;
-  background: #fff;
-  width: 100%;
+export const Hr = styled.hr`
+  background-color: #fff;
   height: 1px;
+  border: none;
 `;
 
-export const ListCapitals = styled.div`
-  color: rgba(0,0,0,0.8);
-  font-weight: bold;
+export const MinMaxWrapper = styled.div`
   display: flex;
-  margin: 15px;
-  span {
-    font-weight:100;
-    margin-right: 10px;
+  padding-bottom: 15px;
+  > * {
+    padding-right: 1em
   }
 `;
+
+export const CapitalsWrapper = styled.p`
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin: 0;
+  display: flex;
+
+  > * {
+    padding-right: 0.6em
+  }
+`

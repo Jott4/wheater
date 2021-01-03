@@ -5,34 +5,47 @@ import InputBase from "@material-ui/core/InputBase";
 import IconButton from "@material-ui/core/IconButton";
 
 import Grid from "@material-ui/core/Grid";
-import Container from "@material-ui/core/Container";
 import SearchIcon from "@material-ui/icons/Search";
 import api from "./services/api";
 
 import GlobalStyle from "./globalStyles";
+import { Typography } from "@material-ui/core";
+import { WrapperHeader, Hr, MinMaxWrapper, CapitalsWrapper } from "./styles";
 
-import { Title, SecondTitle, Divider, ListCapitals } from "./styles";
-
-const API_KEY = "YOUR_API_KEY";
+const API_KEY = "a96866ed4173c7c1b51f7fac358f155a";
 
 const useStyles = makeStyles((theme) => ({
-  root: {
+  wrapperInput: {
     padding: "2px 4px",
     display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     borderRadius: 0,
     border: "solid 1px rgba(241, 126, 40, 1)",
-    width: "90vw",
-    maxWidth: "500px",
-    margin: "5%",
+    width: "60%",
   },
   input: {
     marginLeft: theme.spacing(1),
     flex: 1,
+    fontSize: "1.5rem",
+    padding: "10px",
+  },
+  title: {
+    fontSize: "4.5rem",
+    fontWeight: "bold",
+    color: "#FFF",
+    letterSpacing: "3px",
+  },
+  subtitle: {
+    fontWeight: "bold",
+    color: "#FFF",
+    letterSpacing: "2px",
+    marginBottom: "20px",
   },
 }));
 
 function App() {
+  const classes = useStyles();
   const [city, setCity] = useState("");
   const [capitals, setCapitals] = useState([]);
   const capitalsName = [
@@ -47,11 +60,11 @@ function App() {
     "Manaus",
     "João Pessoa",
   ];
+
   useEffect(() => {
-    //get capitals wheater
-    async function fetchData() {
-      capitalsName.map((item) => {
-        api
+    async function getCapitalsData() {
+      capitalsName.map(async (item) => {
+        await api
           .get("weather", {
             params: {
               q: item,
@@ -61,58 +74,97 @@ function App() {
           })
           .then(
             (res) => {
-              console.log(res.data);
               setCapitals((capitals) => [...capitals, res.data]);
             },
             (err) => {
-              console.log(err.data);
+              console.log(err)
             }
           );
       }, []);
     }
-    fetchData();
-  });
-  const classes = useStyles();
+    getCapitalsData();
+    console.log(capitals);
+  }, []);
+
+  const getWheaterCity = async () => {
+  
+    await api
+    .get("weather", {
+      params: {
+        q: city,
+        APPID: API_KEY,
+        units: "metric",
+      },
+    })
+    .then(
+      (res) => {
+        
+      },
+      (err) => {
+        console.log(err)
+      }
+    );
+  }
+
+  const MakeLabelCapitals = ({ temp_min, temp_max, city }) => (
+    <CapitalsWrapper>
+      <div>{temp_min}°</div> <div>{temp_max}°</div> <div>{city}</div>
+    </CapitalsWrapper>
+  );
   return (
     <>
       <GlobalStyle />
-      <Container maxWidth="sm">   
-        <Grid container spacing={3}>
-          <Title>Previsão do tempo</Title>
-
-          <Paper className={classes.root}>
-            <InputBase
-              className={classes.input}
-              placeholder="Insira aqui o nome da cidade"
-            />
-            <IconButton
-              type="submit"
-              className={classes.iconButton}
-              aria-label="search"
-            >
-              <SearchIcon />
-            </IconButton>
-          </Paper>
-        </Grid>
-        <Divider />
-        <Grid container direction="column" justify="center" alignItems="stretch">
-          <SecondTitle>Capitais</SecondTitle>
-          <ListCapitals>
-            <Grid item xs={6}>
-              <span>Min</span><span>Máx</span>
-              {capitals.slice(0, 5).map((item) => (
-                <p>{item.name}</p>
+      <Grid container>
+        <Grid item md={3} sm={false} />
+        <Grid item sm={12} md={6}>
+          <WrapperHeader>
+            <Typography variant="h1" className={classes.title} align="center">
+              Previsão do tempo
+            </Typography>
+            <Paper className={classes.wrapperInput}>
+              <InputBase
+                className={classes.input}
+                placeholder="Insira aqui o nome da cidade"
+                onChange={(e) => setCity(e.target.value)}
+              />
+              <IconButton type="submit" aria-label="search" onClick={getWheaterCity}>
+                <SearchIcon />
+              </IconButton>
+            </Paper>
+          </WrapperHeader>
+          <Hr />
+          <Grid container>
+            <Grid item sm={false} md={2}></Grid>
+            <Grid item sm={12} md={4}>
+              <Typography variant="h3" className={classes.subtitle}>
+                Capitais
+              </Typography>
+              <MinMaxWrapper>
+                <Typography color="textSecondary">Min</Typography>
+                <Typography color="textSecondary">Max</Typography>
+              </MinMaxWrapper>
+            </Grid>
+            <Grid item sm={12} md={4}>
+              <Typography variant="h3" className={classes.subtitle}>
+                &nbsp;
+              </Typography>
+              <MinMaxWrapper>
+                <Typography color="textSecondary">Min</Typography>
+                <Typography color="textSecondary">Max</Typography>
+              </MinMaxWrapper>
+              {capitals.map((item) => (
+                <MakeLabelCapitals
+                  temp_min={item.main.temp_min}
+                  temp_max={item.main.temp_max}
+                  city={item.name}
+                />
               ))}
             </Grid>
-            <Grid xs={6}>
-            <span>Min</span><span>Máx</span>
-              {capitals.slice(5, 10).map((item) => (
-                <p>{item}</p>
-              ))}
-            </Grid>
-          </ListCapitals>
+            <Grid item sm={false} md={2}></Grid>
+          </Grid>
         </Grid>
-      </Container>
+        <Grid item md={3} sm={false} />
+      </Grid>
     </>
   );
 }
