@@ -19,7 +19,13 @@ import api from "./services/api";
 import classNames from "classnames";
 
 import GlobalStyle from "./globalStyles";
-import { Box, CardHeader, Hidden, Typography } from "@material-ui/core";
+import {
+  Box,
+  CardHeader,
+  Divider,
+  Hidden,
+  Typography,
+} from "@material-ui/core";
 import {
   WrapperHeader,
   Hr,
@@ -38,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "center",
     borderRadius: 0,
     border: "solid 1px rgba(241, 126, 40, 1)",
-    width: "80%",
+    width: "100%",
   },
   input: {
     flex: 1,
@@ -52,7 +58,7 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: "20px",
   },
   card: {
-    width: "80%",
+    width: "100%",
     borderRadius: "0px",
   },
 
@@ -72,55 +78,27 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
   },
+  centerResponsive: {
+    justifyContent: "center",
+  },
+  [theme.breakpoints.down("xs")]: {
+    centerResponsive: { justifyContent: "center" },
+  },
+
+  column: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 }));
 
 function App() {
   const classes = useStyles();
   const [city, setCity] = useState("");
-  const [cityContent, setCityContent] = useState({
-    coord: {
-      lon: -51.1628,
-      lat: -23.3103,
-    },
-    weather: [
-      {
-        id: 801,
-        main: "Clouds",
-        description: "algumas nuvens",
-        icon: "02n",
-      },
-    ],
-    base: "stations",
-    main: {
-      temp: 27,
-      feels_like: 31.43,
-      temp_min: 27,
-      temp_max: 27,
-      pressure: 1014,
-      humidity: 78,
-    },
-    visibility: 10000,
-    wind: {
-      speed: 1.03,
-      deg: 120,
-    },
-    clouds: {
-      all: 20,
-    },
-    dt: 1610242823,
-    sys: {
-      type: 1,
-      id: 8399,
-      country: "BR",
-      sunrise: 1610182049,
-      sunset: 1610230550,
-    },
-    timezone: -10800,
-    id: 3458449,
-    name: "Londrina",
-    cod: 200,
-  });
+  const [cityContent, setCityContent] = useState({});
   const [capitals, setCapitals] = useState([]);
+  const [loading, setLoading] = useState(false);
   const capitalsName = [
     "Rio de Janeiro",
     "São Paulo",
@@ -154,9 +132,48 @@ function App() {
         }
       );
   };
-
+  const today = new Date();
+  const days = [
+    "Domingo",
+    "Segunda",
+    "Terça",
+    "Quarta",
+    "Quinta",
+    "Sexta",
+    "Sábado",
+  ];
   useEffect(() => {
-    async function getCapitalsData() {
+    navigator.geolocation.getCurrentPosition(
+      async (res) => {
+        console.log(res);
+        await api
+          .get("onecall", {
+            params: {
+              lat: res.coords.latitude,
+              lon: res.coords.longitude,
+              exclude: ["minutely", "hourly", "alerts"],
+              APPID: API_KEY,
+              units: "metric",
+              lang: "pt_br",
+            },
+          })
+          .then(
+            (res) => {
+              console.log(res.data);
+              setCityContent(res.data);
+              setLoading(true);
+            },
+            (err) => {
+              console.log(err);
+            }
+          );
+      },
+      (err) => {
+        alert("AMIGÃO HABILITA A GEOLOCALIZAÇÃO AI PA NOIS");
+      }
+    );
+
+    const getCapitalsData = async () => {
       capitalsName.map(async (item) => {
         await api
           .get("weather", {
@@ -175,8 +192,7 @@ function App() {
             }
           );
       }, []);
-    }
-
+    };
     getCapitalsData();
   }, []);
 
@@ -185,6 +201,31 @@ function App() {
       <div>{Math.round(temp_min)}°</div> <div>{Math.round(temp_max)}°</div>{" "}
       <div>{city}</div>
     </CapitalsWrapper>
+  );
+
+  const DayOfWeekWrapper = ({ n_day }) => (
+    <Typography className={classNames(classes.bold, classes.column)}>
+      <strong>{n_day > 6 ? days[n_day - 7] : days[n_day]}</strong>
+
+      <Typography
+        color="textSecondary"
+        className={classNames(classes.center, classes.bold)}
+      >
+        <ArrowDownwardIcon className={classes.icon} />
+        &nbsp;{loading ? `${cityContent.daily[n_day].temp.min}°` : ""}
+      </Typography>
+
+      <Typography
+        color="textSecondary"
+        className={classNames(classes.center, classes.bold)}
+      >
+        <ArrowUpwardIcon className={classes.icon} />
+        <strong>
+          &nbsp;
+          {loading ? `${cityContent.daily[n_day].temp.max}°` : ""}
+        </strong>
+      </Typography>
+    </Typography>
   );
   return (
     <>
@@ -203,7 +244,7 @@ function App() {
             <Card className={classes.card}>
               <CardHeader
                 style={{ paddingBottom: "0px" }}
-                subheader={`${cityContent.name} - ${cityContent.sys.country}`}
+                subheader={loading ? `${days[today.getDay()]}-Feira` : ""}
                 action={
                   <IconButton aria-label="settings">
                     <CloseIcon />
@@ -212,71 +253,129 @@ function App() {
               />
               <CardContent>
                 <Typography
-                  variant="h2"
+                  variant="h3"
                   component="h2"
                   className={classes.bold}
-                  style={{ textTransform: "capitalize" }}
+                  style={{
+                    textTransform: "capitalize",
+                    marginBottom: "16px",
+                    textAlign: "center",
+                  }}
                 >
-                  {cityContent.main.temp}° {cityContent.weather[0].description}
+                  {loading
+                    ? `${cityContent.current.temp}° ${cityContent.current.weather[0].description}`
+                    : ""}
                 </Typography>
-                <Wrapper>
-                  <Box display="flex">
-                    <Typography
-                      color="textSecondary"
-                      className={classNames(classes.center, classes.bold)}
+                <Grid container>
+                  <Grid item xs={false} sm={2} />
+                  <Grid item container spacing={1} xs={12} sm={8}>
+                    <Grid
+                      container
+                      item
+                      xs={12}
+                      sm={6}
+                      className={classes.centerResponsive}
                     >
-                      <ArrowDownwardIcon className={classes.icon} />
-                      &nbsp;{cityContent.main.temp_min}°
-                    </Typography>
+                      <Typography
+                        color="textSecondary"
+                        className={classNames(classes.center, classes.bold)}
+                      >
+                        <ArrowDownwardIcon className={classes.icon} />
+                        &nbsp;
+                        {loading ? `${cityContent.daily[0].temp.min}°` : ""}
+                      </Typography>
 
-                    <Typography
-                      color="textSecondary"
-                      className={classNames(classes.center, classes.bold)}
+                      <Typography
+                        color="textSecondary"
+                        className={classNames(classes.center, classes.bold)}
+                      >
+                        <ArrowUpwardIcon className={classes.icon} />
+                        <strong>
+                          &nbsp;
+                          {loading ? `${cityContent.daily[0].temp.max}°` : ""}
+                        </strong>
+                      </Typography>
+                    </Grid>
+                    <Grid
+                      container
+                      item
+                      xs={12}
+                      sm={6}
+                      className={classes.centerResponsive}
                     >
-                      <ArrowUpwardIcon className={classes.icon} />
-                      <strong>&nbsp;{cityContent.main.temp_max}°</strong>
-                    </Typography>
-                  </Box>
+                      <Typography color="textSecondary">
+                        Sensação:&nbsp;
+                        <strong className={classes.bold}>
+                          {loading
+                            ? `${Math.round(cityContent.current.feels_like)}°`
+                            : ""}
+                        </strong>
+                      </Typography>
+                    </Grid>
 
-                  <Typography color="textSecondary">
-                    Sensação:&nbsp;
-                    <strong className={classes.bold}>
-                      {Math.round(cityContent.main.feels_like)}°
-                    </strong>
-                  </Typography>
+                    <Grid
+                      container
+                      item
+                      xs={12}
+                      sm={6}
+                      className={classes.centerResponsive}
+                    >
+                      <Typography
+                        color="textSecondary"
+                        className={classes.center}
+                      >
+                        {loading
+                          ? `${new Date(
+                              cityContent.current.sunrise * 1000
+                            ).getHours()}:
+                      ${new Date(
+                        cityContent.current.sunrise * 1000
+                      ).getMinutes()}`
+                          : ""}
+                        &nbsp;
+                        <WbSunnyIcon />
+                        &nbsp;
+                        {loading
+                          ? `${new Date(
+                              cityContent.current.sunset * 1000
+                            ).getHours()}:
+                      ${new Date(
+                        cityContent.current.sunset * 1000
+                      ).getMinutes()}`
+                          : ""}
+                        &nbsp;
+                      </Typography>
+                    </Grid>
+                    <Grid
+                      container
+                      item
+                      xs={12}
+                      sm={6}
+                      className={classes.centerResponsive}
+                    >
+                      <Typography color="textSecondary">
+                        Humidade:&nbsp;
+                        <strong className={classes.bold}>
+                          {loading ? `${cityContent.current.humidity}%` : ""}
+                        </strong>
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={false} sm={2} />
+                </Grid>
+                <Divider
+                  style={{ backgroundColor: "orange", margin: "16px 0px" }}
+                />
 
-                  <Typography color="textSecondary" className={classes.center}>
-                    {new Date(cityContent.sys.sunrise * 1000).getHours()}:
-                    {new Date(cityContent.sys.sunrise * 1000).getMinutes()}
-                    &nbsp;
-                    <WbSunnyIcon />
-                    &nbsp;
-                    {new Date(cityContent.sys.sunset * 1000).getHours()}:
-                    {new Date(cityContent.sys.sunset * 1000).getMinutes()}
-                    &nbsp;
-                  </Typography>
-                </Wrapper>
-                <Wrapper>
-                  <Typography color="textSecondary">
-                    Vento:&nbsp;
-                    <strong className={classes.bold}>
-                      {Math.round(cityContent.wind.speed * 3.6)} km/h -{" "}
-                      {cityContent.wind.deg}°
-                    </strong>
-                  </Typography>
-                  <Typography color="textSecondary">
-                    Pressão:&nbsp;
-                    <strong className={classes.bold}>
-                      {Math.round(cityContent.main.pressure * 0.75)} mmHg
-                    </strong>
-                  </Typography>
-                  <Typography color="textSecondary">
-                    Humidade:&nbsp;
-                    <strong className={classes.bold}>
-                      {cityContent.main.humidity}%
-                    </strong>
-                  </Typography>
-                </Wrapper>
+                <Box display="flex" style={{ justifyContent: "space-evenly" }}>
+                  <DayOfWeekWrapper n_day={1} />
+                  <DayOfWeekWrapper n_day={2} />
+                  <DayOfWeekWrapper n_day={3} />
+                  <Hidden smDown>
+                    <DayOfWeekWrapper n_day={4} />
+                    <DayOfWeekWrapper n_day={5} />
+                  </Hidden>
+                </Box>
               </CardContent>
             </Card>
             <Paper className={classes.wrapperInput}>
@@ -326,7 +425,7 @@ function App() {
                       <Grid item xs={12} md={6}>
                         <Box my={1}>
                           <MakeLabelCapitals
-                            key={item.name}
+                            key={item.id}
                             temp_min={item.main.temp_min}
                             temp_max={item.main.temp_max}
                             city={item.name}
