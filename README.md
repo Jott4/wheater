@@ -14,9 +14,12 @@ yarn start
 
 ## Example
 Desktop
-![example](https://imgur.com/ZD33XqM)
+<br>
+![example](https://i.imgur.com/ZD33XqM.png)
+<br>
 Mobile
-![example](https://imgur.com/9gzFq5O)
+<br>
+![example](https://i.imgur.com/9gzFq5O.png)
 
 
 ## Contributing
